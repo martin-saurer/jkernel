@@ -13,7 +13,9 @@ It is based on the same code as [qjide](http://www.github.com/martin-saurer/qjid
 * Ensure that the J user directory is under your J installation folder.
 
 Example:
+
 J-Installation-Folder = /home/martin/J804
+
 J-User-Directory = /home/martin/J804/user
 
 ## Installation
