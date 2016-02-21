@@ -33,11 +33,11 @@ Linux:
 Windows:
 \<anaconda-installation-folder\>\\Lib\\site-packages\\
 
-## Kernel Configuration
+### Kernel Configuration
 
 * Edit qjide.cfg to specify your J installation folder
 
-## Kernel Definition
+### Kernel Definition
 
 Copy the directory "jkernel" under \<repository\>/kernel_definition/ to:
 
