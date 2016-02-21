@@ -24,14 +24,11 @@ J-User-Directory = /home/martin/J804/user
 
 Copy the directory "jkernel" to your anaconda installation folder:
 
-Mac OS X:
-\<anaconda-installation-folder\>/lib/python3.5/site-packages/
+* Mac OS X: \<anaconda-installation-folder\>/lib/python3.5/site-packages/
 
-Linux:
-\<anaconda-installation-folder\>/lib/python3.5/site-packages/
+* Linux: \<anaconda-installation-folder\>/lib/python3.5/site-packages/
 
-Windows:
-\<anaconda-installation-folder\>\\Lib\\site-packages\\
+* Windows: \<anaconda-installation-folder\>\\Lib\\site-packages\\
 
 ### Kernel Configuration
 
@@ -41,17 +38,14 @@ Windows:
 
 Copy the directory "jkernel" under \<repository\>/kernel_definition/ to:
 
-Mac OS X:
-~/Library/Jupyter/kernels/
+* Mac OS X: ~/Library/Jupyter/kernels/
 
-Linux:
-~/.local/share/jupyter/kernels/
+* Linux: ~/.local/share/jupyter/kernels/
 
-Windows:
-%APPDATA%\\Roaming\\jupyter\\kernels\\
+* Windows: %APPDATA%\\Roaming\\jupyter\\kernels\\
 
 ## Run
 
-Run: jupyter notebook
+Run: jupyter notebook (from the command line)
 
 Or: Use the anaconda launcher, and start "ipython-notebook"
