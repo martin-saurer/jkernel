@@ -100,7 +100,7 @@ class JKernel(Kernel):
                      imgnam = output[len(prefix):]
                      endpos = imgnam.find('?')
                      imgnam = imgnam[:endpos]
-                     imgnam = os.path.join(qjide.JInsFol,'user','temp',imgnam)
+                     imgnam = os.path.join(qjide.JUsrFol,'temp',imgnam)
 
                      # Read image in base64 encoded data
                      with open(imgnam,'rb') as fp:
@@ -117,7 +117,7 @@ class JKernel(Kernel):
                   else:
 
                      # Generate HTML file name
-                     htmnam = os.path.join(qjide.JInsFol,'user','temp','plot.html')
+                     htmnam = os.path.join(qjide.JUsrFol,'temp','plot.html')
 
                      # Read html file
                      with open(htmnam,'r') as fp:
@@ -165,34 +165,7 @@ class JKernel(Kernel):
       pass
 
    def do_inspect(self,code,cursor_pos,detail_level=0):
-
-      inspection = ""
-
-      code += "\n"
-      line = code[code.rfind("\n", 0, cursor_pos)+1 : code.find("\n", cursor_pos)]
-
-      line_pos = cursor_pos - code.rfind("\n", 0, cursor_pos) - 2
-
-      found = False
-
-      if line[line_pos].isalnum():
-         i, j = line_pos, line_pos
-         while i > 0 and line[i-1].isalnum() or line[i-1] == "_":
-            i -= 1
-         while j < len(line)-1 and line[j+1].isalnum() or line[j+1] == "_":
-            j += 1
-         if line[i].isalpha():
-            if j == len(line)-1 or line[j+1] not in ".:":
-               name = line[i:j+1]
-               inspection = self.j.sendline(name)
-               found = True
-
-      return {
-         'status': 'ok',
-         'data': {'text/plain': inspection},
-         'metadata': {},
-         'found': found
-      }
+      pass
 
 if __name__ == '__main__':
    from ipykernel.kernelapp import IPKernelApp

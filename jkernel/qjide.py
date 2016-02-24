@@ -1,4 +1,4 @@
-﻿################################################################################
+################################################################################
 #
 # File:        qjide.py
 # Author:      Martin Saurer, 18.02.2016
@@ -74,6 +74,9 @@ ConsoleFontSize = 16
 
 # J installation folder
 JInsFol = ''
+
+# J user folder
+JUsrFol = ''
 
 # J multi session
 JMulSes = False
@@ -205,6 +208,9 @@ class J():
    # Constructor
    def __init__(self,key='main',asn=False):
 
+      # Globals
+      global JUsrFol
+
       # Save client address
       self.CipAddr = key
       self.IsAsync = asn
@@ -260,7 +266,8 @@ class J():
       self.JType = pointer(c_long())
       self.JRank = pointer(c_long())
       self.JShap = pointer(c_long())
-      self.JData = pointer(c_long())
+     #self.JData = pointer(c_long())
+      self.JData = pointer(c_char_p())
 
       # Declare J callback types
       if os.name == 'nt':
@@ -308,6 +315,17 @@ class J():
       # Load qjide.ijs
       self.IjsFile = os.path.join(os.path.dirname(__file__),'qjide.ijs')
       s = self.JDll.JDo(self.JSession,qjide_encode3('load \'' + self.IjsFile + '\''))
+
+      # Get J user folder
+      s = self.JDll.JDo(self.JSession,qjide_encode3('tmpstr_qjide_ =: jpath \'~user\''))
+      s = self.JDll.JGetM(self.JSession,qjide_encode3('tmpstr_qjide_'),self.JType,self.JRank,self.JShap,self.JData)
+      s = string_at(self.JData.contents.value)
+      s = qjide_decode3(s)
+      if os.name == 'nt':
+         s = s.replace('/','\\')
+      else:
+         s = s.replace('\\','/')
+      JUsrFol = s
 
       # Set editor and console font sizes
       s = self.JDll.JDo(self.JSession,qjide_encode3('EDITOR_FONT_SIZE_qjide_  =: ' + str(EditorFontSize )))
