@@ -442,7 +442,9 @@ class J():
    # Do a J sentence
    def Exec(self,cmd):
       self.OLasAcc = time.strftime('%Y-%m-%d %H:%M:%S')
-      s = self.JDll.JDo(self.JSession,qjide_encode3(cmd))
+      #s = self.JDll.JDo(self.JSession,qjide_encode3(cmd))
+      # GitHub issue #1 (jkernel)
+      s = self.JDll.JDo(self.JSession,c_char_p(qjide_encode3(cmd)))
       return s
 
    # Get a string from a J variable
