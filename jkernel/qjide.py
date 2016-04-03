@@ -75,6 +75,9 @@ ConsoleFontSize = 16
 # J installation folder
 JInsFol = ''
 
+# J binaries folder
+JBinFol = 'bin'
+
 # J user folder
 JUsrFol = ''
 
@@ -93,7 +96,8 @@ def print_exception_info():
    typ,val,trb = sys.exc_info()
    fil = os.path.split(trb.tb_frame.f_code.co_filename)[1]
    lin = trb.tb_lineno
-   est = 'Exception: ' + str(typ) + ': ' + str(val) + ' / in ' + str(fil) + ':' + str(lin)
+   est = ('Exception: ' + str(typ) + ': ' + str(val) + ' / in ' + str(fil) +
+         ':' + str(lin))
    print('>>>>>>>> ' + est)
 
 # Encode to utf-8 if python version is 2
@@ -152,8 +156,9 @@ def qjide_json_dumps(o):
 warnings.filterwarnings('ignore')
 
 # Read config file qjide.cfg
-if os.path.exists(os.path.join(os.path.dirname(__file__),'qjide.cfg')):
-   cfg = os.path.join(os.path.dirname(__file__),'qjide.cfg')
+if os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'qjide.cfg')):
+   cfg = os.path.join(os.path.dirname(os.path.realpath(__file__)),'qjide.cfg')
    if sys.version_info[0] == 2:
       execfile(cfg)
    else:
@@ -162,16 +167,18 @@ if os.path.exists(os.path.join(os.path.dirname(__file__),'qjide.cfg')):
          exec(code)
 else:
    print('')
-   print('************************************************************************')
-   print('* Configuration file: ' + os.path.join(os.path.dirname(__file__),'qjide.cfg') + ' does not exist!')
-   print('************************************************************************')
+   print('*' * 80)
+   print('* Configuration file: ' +
+         os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                      'qjide.cfg') + ' does not exist!')
+   print('*' * 80)
    print('')
    if __name__  == '__main__':
       sys.exit(1)
 
 # If DocRoot is empty, we take this scripts path as DocRoot
 if DocRoot == '':
-   DocRoot = os.path.join(os.path.dirname(__file__),'webapp')
+   DocRoot = os.path.join(os.path.dirname(os.path.realpath(__file__)),'webapp')
 if DocRoot == '':
    DocRoot = os.path.join(os.getcwd(),'webapp')
 
@@ -185,6 +192,9 @@ JObjects = {}
 # Plot html data and dirty flag
 PlotHtml = {}
 PlotSent = {}
+
+# Help Server
+HelpServ = None
 
 ################################################################################
 # J interpreter class
@@ -231,7 +241,7 @@ class J():
       self.JOutStr = ''
 
       # J Binaries Folder (absolute or relative (to JInsFol) path)
-      self.JBinFol = 'bin'
+      self.JBinFol = JBinFol
 
       # J Profile (absolute or relative (to JBinFol) path)
       self.JProFil = 'profile.ijs'
@@ -266,31 +276,34 @@ class J():
       self.JType = pointer(c_long())
       self.JRank = pointer(c_long())
       self.JShap = pointer(c_long())
-     #self.JData = pointer(c_long())
       self.JData = pointer(c_char_p())
 
       # Declare J callback types
       if os.name == 'nt':
-         self.JInputType    = WINFUNCTYPE(c_char_p,c_long,c_char_p)
-         self.JWdType       = WINFUNCTYPE(c_long,c_long,c_long,c_void_p,c_void_p)
-         self.JOutputType   = WINFUNCTYPE(None,c_long,c_long,c_char_p)
+         self.JInputType  = WINFUNCTYPE(c_char_p,c_long,c_char_p)
+         self.JWdType     = WINFUNCTYPE(c_long,c_long,c_long,c_void_p,c_void_p)
+         self.JOutputType = WINFUNCTYPE(None,c_long,c_long,c_char_p)
       else:
-         self.JInputType    = CFUNCTYPE(c_char_p,c_long,c_char_p)
-         self.JWdType       = CFUNCTYPE(c_long,c_long,c_long,c_void_p,c_void_p)
-         self.JOutputType   = CFUNCTYPE(None,c_long,c_long,c_char_p)
+         self.JInputType  = CFUNCTYPE(c_char_p,c_long,c_char_p)
+         self.JWdType     = CFUNCTYPE(c_long,c_long,c_long,c_void_p,c_void_p)
+         self.JOutputType = CFUNCTYPE(None,c_long,c_long,c_char_p)
 
       # Declare J callback functions
-      self.JInputFunc        = self.JInputType(self.JInput)
-      self.JWdFunc           = self.JWdType(self.JWd)
-      self.JOutputFunc       = self.JOutputType(self.JOutput)
-      self.JCallBacks        = [self.JOutputFunc,self.JWdFunc,self.JInputFunc,0,c_void_p(J.SMCON)]
-      self.JCBArTypes        = (c_void_p * len(self.JCallBacks))
-      self.JCBArArray        = self.JCBArTypes()
-      self.JCBArArray[0]     = cast(self.JCallBacks[0],c_void_p)
-      self.JCBArArray[1]     = cast(self.JCallBacks[1],c_void_p)
-      self.JCBArArray[2]     = cast(self.JCallBacks[2],c_void_p)
-      self.JCBArArray[3]     = c_void_p(self.JCallBacks[3])
-      self.JCBArArray[4]     = self.JCallBacks[4]
+      self.JInputFunc    = self.JInputType(self.JInput)
+      self.JWdFunc       = self.JWdType(self.JWd)
+      self.JOutputFunc   = self.JOutputType(self.JOutput)
+      self.JCallBacks    = [self.JOutputFunc,
+                            self.JWdFunc,
+                            self.JInputFunc,
+                            0,
+                            c_void_p(J.SMCON)]
+      self.JCBArTypes    = (c_void_p * len(self.JCallBacks))
+      self.JCBArArray    = self.JCBArTypes()
+      self.JCBArArray[0] = cast(self.JCallBacks[0],c_void_p)
+      self.JCBArArray[1] = cast(self.JCallBacks[1],c_void_p)
+      self.JCBArArray[2] = cast(self.JCallBacks[2],c_void_p)
+      self.JCBArArray[3] = c_void_p(self.JCallBacks[3])
+      self.JCBArArray[4] = self.JCallBacks[4]
 
       # Load J dynamic link library / shareable object
       if os.name == 'nt':
@@ -308,17 +321,28 @@ class J():
       self.JDll.JSM(self.JSession,self.JCBArArray)
 
       # Setup J environment
-      s = self.JDll.JDo(self.JSession,qjide_encode3('ARGV_z_ =: \'\''))
-      s = self.JDll.JDo(self.JSession,qjide_encode3('BINPATH_z_ =: \'' + self.JBin + '\''))
-      s = self.JDll.JDo(self.JSession,qjide_encode3('0!:0 <\'' + self.JPro + '\''))
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('ARGV_z_ =: \'\''))
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('BINPATH_z_ =: \'' + self.JBin + '\''))
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('0!:0 <\'' + self.JPro + '\''))
 
       # Load qjide.ijs
-      self.IjsFile = os.path.join(os.path.dirname(__file__),'qjide.ijs')
-      s = self.JDll.JDo(self.JSession,qjide_encode3('load \'' + self.IjsFile + '\''))
+      self.IjsFile = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                                  'qjide.ijs')
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('load \'' + self.IjsFile + '\''))
 
       # Get J user folder
-      s = self.JDll.JDo(self.JSession,qjide_encode3('tmpstr_qjide_ =: jpath \'~user\''))
-      s = self.JDll.JGetM(self.JSession,qjide_encode3('tmpstr_qjide_'),self.JType,self.JRank,self.JShap,self.JData)
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('tmpstr_qjide_ =: jpath \'~user\''))
+      s = self.JDll.JGetM(self.JSession,
+                          qjide_encode3('tmpstr_qjide_'),
+                          self.JType,
+                          self.JRank,
+                          self.JShap,
+                          self.JData)
       s = string_at(self.JData.contents.value)
       s = qjide_decode3(s)
       if os.name == 'nt':
@@ -328,11 +352,17 @@ class J():
       JUsrFol = s
 
       # Set editor and console font sizes
-      s = self.JDll.JDo(self.JSession,qjide_encode3('EDITOR_FONT_SIZE_qjide_  =: ' + str(EditorFontSize )))
-      s = self.JDll.JDo(self.JSession,qjide_encode3('CONSOLE_FONT_SIZE_qjide_ =: ' + str(ConsoleFontSize)))
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('EDITOR_FONT_SIZE_qjide_  =: ' +
+                        str(EditorFontSize )))
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('CONSOLE_FONT_SIZE_qjide_ =: ' +
+                        str(ConsoleFontSize)))
 
       # Set client ip address
-      s = self.JDll.JDo(self.JSession,qjide_encode3('cipaddr_qjide_ =: \'' + self.CipAddr + '\''))
+      s = self.JDll.JDo(self.JSession,
+                        qjide_encode3('cipaddr_qjide_ =: \'' +
+                        self.CipAddr + '\''))
 
       # Finally, we start the I/O loop as a thread
       if self.IsAsync:
@@ -442,15 +472,14 @@ class J():
    # Do a J sentence
    def Exec(self,cmd):
       self.OLasAcc = time.strftime('%Y-%m-%d %H:%M:%S')
-      #s = self.JDll.JDo(self.JSession,qjide_encode3(cmd))
-      # GitHub issue #1 (jkernel)
       s = self.JDll.JDo(self.JSession,c_char_p(qjide_encode3(cmd)))
       return s
 
    # Get a string from a J variable
    def Gets(self,var):
       self.OLasAcc = time.strftime('%Y-%m-%d %H:%M:%S')
-      s = self.JDll.JGetM(self.JSession,qjide_encode3(var),self.JType,self.JRank,self.JShap,self.JData)
+      s = self.JDll.JGetM(self.JSession,qjide_encode3(var),
+                          self.JType,self.JRank,self.JShap,self.JData)
       s = string_at(self.JData.contents.value)
       s = qjide_decode3(s)
       return s
@@ -510,7 +539,7 @@ class HelpHandler(BaseHTTPRequestHandler):
    def log_message(self,format,*args):
       if SrvMesg:
          sys.stderr.write("%s - - [%s] %s\n" %
-                           (self.address_string(),
+                          (self.address_string(),
                            self.log_date_time_string(),
                            format%args))
 
@@ -590,7 +619,7 @@ class HelpHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type'  ,MimeType)
             self.send_header('Content-length',ln      )
             self.end_headers()
-            self.wfile.write(tx)
+            self.wfile.write(qjide_encode3(tx))
             self.wfile.flush()
 
             # Return
@@ -601,8 +630,9 @@ class HelpHandler(BaseHTTPRequestHandler):
 
 # Start HTTP Help server
 def StartHelpServer():
-   server = HTTPServer((SrvHost,HlpPort),HelpHandler)
-   server.serve_forever()
+   global HelpServ
+   HelpServ = HTTPServer((SrvHost,HlpPort),HelpHandler)
+   HelpServ.serve_forever()
 
 ################################################################################
 # Application Handler
@@ -826,10 +856,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                PlotSent[CipAddr] = False
 
          # Read CGI data
-         CgiData = cgi.FieldStorage(fp      = self.rfile,
-                                    headers = self.headers,
-                                    environ = {'REQUEST_METHOD':'POST',
-                                               'CONTENT_TYPE':self.headers['Content-Type']})
+         CgiData = cgi.FieldStorage(
+                      fp      = self.rfile,
+                      headers = self.headers,
+                      environ = {'REQUEST_METHOD':'POST',
+                                 'CONTENT_TYPE':self.headers['Content-Type']})
 
          # Extract JSON string, and create JSON object
          JsonStr = CgiData.getvalue('json')
@@ -859,7 +890,9 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: 9!:14\'\'')
                s = JObjects[CipAddr].Gets('tmpstr_qjide_')
                JsonObj['head']['rcode'] = 'INF'
-               JsonObj['head']['rmesg'] = 'Connected to: ' + JObjects[CipAddr].JLib + ' / ' + s + '.'
+               JsonObj['head']['rmesg'] = ('Connected to: ' +
+                                          JObjects[CipAddr].JLib +
+                                          ' / ' + s + '.')
 
             ####################################################################
             # Font size of editor and console                                  #
@@ -868,7 +901,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 
                # Editor font size
                if JsonObj['head']['scode'] == 'editor':
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json EDITOR_FONT_SIZE_qjide_')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json EDITOR_FONT_SIZE_qjide_')
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
                   JsonObj['head']['rcode'] = 'INF'
                   JsonObj['head']['rmesg'] = 'SIZ'
@@ -876,7 +910,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 
                # Console font size
                if JsonObj['head']['scode'] == 'console':
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json CONSOLE_FONT_SIZE_qjide_')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json CONSOLE_FONT_SIZE_qjide_')
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
                   JsonObj['head']['rcode'] = 'INF'
                   JsonObj['head']['rmesg'] = 'SIZ'
@@ -891,7 +926,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                if JsonObj['head']['scode'] == 'goto':
                   # If JCurDir is empty get used dir from J
                   if JObjects[CipAddr].Getd() == '':
-                     s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: jpath \'~user\'')
+                     s = JObjects[CipAddr].Exec(
+                         'tmpstr_qjide_ =: jpath \'~user\'')
                      s = JObjects[CipAddr].Gets('tmpstr_qjide_')
                      if os.name == 'nt':
                         JObjects[CipAddr].Setd(s.replace('/','\\'))
@@ -903,7 +939,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      fls = os.listdir(JObjects[CipAddr].Getd())
                      # Mark directories
                      for i in range(0,len(fls)):
-                        if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),fls[i])):
+                        if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),
+                           fls[i])):
                            fls[i] = fls[i] + '/'
                         fls[i] = qjide_decode_escapes(fls[i])
                      # Sort file array
@@ -911,15 +948,18 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      # Prepare return object
                      JsonObj['head']['rcode'] = 'INF'
                      JsonObj['head']['rmesg'] = 'DIR'
-                     JsonObj['data']          = {'path':JObjects[CipAddr].Getd(),'files':fls}
+                     JsonObj['data']          = {
+                        'path':JObjects[CipAddr].Getd(),'files':fls}
                   elif JsonObj['data'] == '..':
                      # Update JCurDir
-                     JObjects[CipAddr].Setd(os.path.dirname(JObjects[CipAddr].Getd()))
+                     JObjects[CipAddr].Setd(
+                        os.path.dirname(JObjects[CipAddr].Getd()))
                      # Get all files from directory
                      fls = os.listdir(JObjects[CipAddr].Getd())
                      # Mark directories
                      for i in range(0,len(fls)):
-                        if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),fls[i])):
+                        if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),
+                           fls[i])):
                            fls[i] = fls[i] + '/'
                         fls[i] = qjide_decode_escapes(fls[i])
                      # Sort file array
@@ -927,15 +967,19 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      # Prepare return object
                      JsonObj['head']['rcode'] = 'INF'
                      JsonObj['head']['rmesg'] = 'DIR'
-                     JsonObj['data']          = {'path':JObjects[CipAddr].Getd(),'files':fls}
-                  elif os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),JsonObj['data'])):
+                     JsonObj['data']          = {
+                        'path':JObjects[CipAddr].Getd(),'files':fls}
+                  elif os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),
+                     JsonObj['data'])):
                      # Update JCurDir
-                     JObjects[CipAddr].Setd(os.path.join(JObjects[CipAddr].Getd(),JsonObj['data']))
+                     JObjects[CipAddr].Setd(
+                        os.path.join(JObjects[CipAddr].Getd(),JsonObj['data']))
                      # Get all files from directory
                      fls = os.listdir(JObjects[CipAddr].Getd())
                      # Mark directories
                      for i in range(0,len(fls)):
-                        if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),fls[i])):
+                        if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),
+                           fls[i])):
                            fls[i] = fls[i] + '/'
                         fls[i] = qjide_decode_escapes(fls[i])
                      # Sort file array
@@ -943,10 +987,12 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      # Prepare return object
                      JsonObj['head']['rcode'] = 'INF'
                      JsonObj['head']['rmesg'] = 'DIR'
-                     JsonObj['data']          = {'path':JObjects[CipAddr].Getd(),'files':fls}
+                     JsonObj['data']          = {
+                        'path':JObjects[CipAddr].Getd(),'files':fls}
                   else:
                      # Get file contents
-                     fil = os.path.join(JObjects[CipAddr].Getd(),JsonObj['data'])
+                     fil = os.path.join(JObjects[CipAddr].Getd(),
+                           JsonObj['data'])
                      ext = os.path.splitext(fil)[1].lower()
                      suc = True
                      if ext == '.ijs' or ext == '.txt' or ext == '.cfg':
@@ -969,15 +1015,18 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                            else:
                               # Prepare return object
                               JsonObj['head']['rcode'] = 'ERR'
-                              JsonObj['head']['rmesg'] = 'Cannot convert file contents to unicode.'
+                              JsonObj['head']['rmesg'] = \
+                                 'Cannot convert file contents to unicode.'
                         else:
                            # Prepare return object
                            JsonObj['head']['rcode'] = 'ERR'
-                           JsonObj['head']['rmesg'] = 'Cannot read file contents.'
+                           JsonObj['head']['rmesg'] = \
+                              'Cannot read file contents.'
                      else:
                         # Prepare return object
                         JsonObj['head']['rcode'] = 'ERR'
-                        JsonObj['head']['rmesg'] = 'Cannot open file of type: ' + ext
+                        JsonObj['head']['rmesg'] = \
+                           'Cannot open file of type: ' + ext
 
                # Goto home directory (J user directory) ########################
                if JsonObj['head']['scode'] == 'home':
@@ -992,7 +1041,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   fls = os.listdir(JObjects[CipAddr].Getd())
                   # Mark directories
                   for i in range(0,len(fls)):
-                     if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),fls[i])):
+                     if os.path.isdir(os.path.join(JObjects[CipAddr].Getd(),
+                        fls[i])):
                         fls[i] = fls[i] + '/'
                      fls[i] = qjide_decode_escapes(fls[i])
                   # Sort file array
@@ -1000,13 +1050,15 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   # Prepare return object
                   JsonObj['head']['rcode'] = 'INF'
                   JsonObj['head']['rmesg'] = 'DIR'
-                  JsonObj['data']          = {'path':JObjects[CipAddr].Getd(),'files':fls}
+                  JsonObj['data']          = {
+                     'path':JObjects[CipAddr].Getd(),'files':fls}
 
                # Get all locales ###############################################
                if JsonObj['head']['scode'] == 'locales':
                   # Get locales
                   s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: 18!:1 (0)')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json tmpobj_qjide_')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json tmpobj_qjide_')
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
                   s = json.loads(s,encoding='utf-8')
                   # Prepare return object
@@ -1018,12 +1070,17 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                if JsonObj['head']['scode'] == 'defs':
                   # Get locales
                   loc = qjide_encode2(JsonObj['data'])
-                  s = JObjects[CipAddr].Exec('curloc_qjide_ =: 18!:5\'\'')
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: 18!:4 <\'' + loc + '\'')
-                  s = JObjects[CipAddr].Exec('locnms_qjide_ =: 4!:1 (3)')
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: 18!:4 curloc_qjide_')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json locnms_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'curloc_qjide_ =: 18!:5\'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: 18!:4 <\'' + loc + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'locnms_qjide_ =: 4!:1 (3)')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: 18!:4 curloc_qjide_')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json locnms_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1039,15 +1096,21 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   scrnam = ''
                   defnam = qjide_encode2(JsonObj['data'])
                   # Get locales
-                  s = JObjects[CipAddr].Exec('scridx_qjide_ =: 4!:4 <\'' + defnam + '\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json scridx_qjide_')
-                  s = JObjects[CipAddr].Gets('tmpstr_qjide_')
+                  s = JObjects[CipAddr].Exec(
+                      'scridx_qjide_ =: 4!:4 <\'' + defnam + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json scridx_qjide_')
+                  s = JObjects[CipAddr].Gets(
+                      'tmpstr_qjide_')
                   if s != '_1':
-                     s = JObjects[CipAddr].Exec('scrnam_qjide_ =: ' + s + '{4!:3 \'\'')
-                     s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: >scrnam_qjide_')
-                     s = JObjects[CipAddr].Gets('tmpstr_qjide_')
+                     s = JObjects[CipAddr].Exec(
+                         'scrnam_qjide_ =: ' + s + '{4!:3 \'\'')
+                     s = JObjects[CipAddr].Exec(
+                         'tmpstr_qjide_ =: >scrnam_qjide_')
+                     s = JObjects[CipAddr].Gets(
+                         'tmpstr_qjide_')
                      scrnam = s
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Prepare return object
                   JsonObj['head']['rcode'] = 'INF'
@@ -1121,9 +1184,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Get lab names #################################################
                if JsonObj['head']['scode'] == 'available':
                   # Get labs
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: getlabs_qjide_\'\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json tmpobj_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: getlabs_qjide_\'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json tmpobj_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1136,9 +1201,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Get lab files #################################################
                if JsonObj['head']['scode'] == 'files':
                   # Get labs
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: LABFILES_qjide_')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json tmpobj_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: LABFILES_qjide_')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json tmpobj_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1190,9 +1257,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Check online status ###########################################
                if JsonObj['head']['scode'] == 'check':
                   # Check online
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: \'update\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json tmpobj_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: \'update\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json tmpobj_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1205,9 +1274,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Package status ################################################
                if JsonObj['head']['scode'] == 'status':
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: \'status\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json tmpobj_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: \'status\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json tmpobj_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1220,12 +1291,19 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Get all packages ##############################################
                if JsonObj['head']['scode'] == 'getall':
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('inspac_qjide_ =: \'showinstalled\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('avapac_qjide_ =: \'shownotinstalled\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('avapac_qjide_ =: |:(0{|:avapac_qjide_),(<\'\'),((1,2){|:avapac_qjide_)')
-                  s = JObjects[CipAddr].Exec('allpac_qjide_ =: (/:(inspac_qjide_,avapac_qjide_)){(inspac_qjide_,avapac_qjide_)')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json <\"1 allpac_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'inspac_qjide_ =: \'showinstalled\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'avapac_qjide_ =: \'shownotinstalled\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'avapac_qjide_ =: |:(0{|:avapac_qjide_), ' +
+                      '(<\'\'),((1,2){|:avapac_qjide_)')
+                  s = JObjects[CipAddr].Exec(
+                      'allpac_qjide_ =: (/:(inspac_qjide_,avapac_qjide_)){' +
+                      '(inspac_qjide_,avapac_qjide_)')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json <\"1 allpac_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1238,9 +1316,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Get upgradeable packages ######################################
                if JsonObj['head']['scode'] == 'upgrades':
                   # Get upgradeable packages
-                  s = JObjects[CipAddr].Exec('upgpac_qjide_ =: \'showupgrade\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json <\"1 upgpac_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'upgpac_qjide_ =: \'showupgrade\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json <\"1 upgpac_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1253,9 +1333,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Get installed packages ########################################
                if JsonObj['head']['scode'] == 'installed':
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('inspac_qjide_ =: \'showinstalled\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json <\"1 inspac_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'inspac_qjide_ =: \'showinstalled\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json <\"1 inspac_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1268,10 +1350,14 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                # Get not installed packages ####################################
                if JsonObj['head']['scode'] == 'notinstalled':
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('avapac_qjide_ =: \'shownotinstalled\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('avapac_qjide_ =: |:(0{|:avapac_qjide_),(<\'\'),((1,2){|:avapac_qjide_)')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json <\"1 avapac_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'avapac_qjide_ =: \'shownotinstalled\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                     'avapac_qjide_ =: |:(0{|:avapac_qjide_),(<\'\'),' +
+                     '((1,2){|:avapac_qjide_)')
+                  s = JObjects[CipAddr].Exec(
+                     'tmpstr_qjide_ =: enc_json <\"1 avapac_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1281,16 +1367,27 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = 'NIN'
                   JsonObj['data']          = s
 
-               # Get package categories ###################################
+               # Get package categories ########################################
                if JsonObj['head']['scode'] == 'categories':
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('inspac_qjide_ =: \'showinstalled\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('avapac_qjide_ =: \'shownotinstalled\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('avapac_qjide_ =: |:(0{|:avapac_qjide_),(<\'\'),((1,2){|:avapac_qjide_)')
-                  s = JObjects[CipAddr].Exec('allpac_qjide_ =: (/:(inspac_qjide_,avapac_qjide_)){(inspac_qjide_,avapac_qjide_)')
-                  s = JObjects[CipAddr].Exec('allcat_qjide_ =: (I.(~:(0{|:;:(>0{|:allpac_qjide_)))){(0{|:;:(>0{|:allpac_qjide_))')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json allcat_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'inspac_qjide_ =: \'showinstalled\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'avapac_qjide_ =: \'shownotinstalled\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'avapac_qjide_ =: ' +
+                      '|:(0{|:avapac_qjide_),(<\'\'),((1,2){|:avapac_qjide_)')
+                  s = JObjects[CipAddr].Exec(
+                      'allpac_qjide_ =: ' +
+                      '(/:(inspac_qjide_,avapac_qjide_)){' +
+                      '(inspac_qjide_,avapac_qjide_)')
+                  s = JObjects[CipAddr].Exec(
+                      'allcat_qjide_ =: ' +
+                      '(I.(~:(0{|:;:(>0{|:allpac_qjide_)))){' +
+                      '(0{|:;:(>0{|:allpac_qjide_))')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json allcat_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1300,14 +1397,16 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = 'ALL'
                   JsonObj['data']          = s
 
-               # Get packages for selected category #######################
+               # Get packages for selected category ############################
                if JsonObj['head']['scode'] == 'category':
                   # Category name
                   catnam = qjide_encode2(JsonObj['data'])
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('paccat_qjide_ =: \'search\' jpkg \'' + catnam + '\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json <\"1 paccat_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'paccat_qjide_ =: \'search\' jpkg \'' + catnam + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json <\"1 paccat_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1317,16 +1416,22 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = 'ALL'
                   JsonObj['data']          = s
 
-               # Get package info #########################################
+               # Get package info ##############################################
                if JsonObj['head']['scode'] == 'info':
                   # Package name
                   pacnam = qjide_encode2(JsonObj['data'])
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('sumpac_qjide_ =: \'show\' jpkg \'' + pacnam + '\'')
-                  s = JObjects[CipAddr].Exec('hispac_qjide_ =: \'history\' jpkg \'' + pacnam + '\'')
-                  s = JObjects[CipAddr].Exec('manpac_qjide_ =: \'manifest\' jpkg \'' + pacnam + '\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json 2 3 $ (\'summary\';\'history\';\'manifest\'),(sumpac_qjide_;hispac_qjide_;manpac_qjide_)')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'sumpac_qjide_ =: \'show\' jpkg \'' + pacnam + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'hispac_qjide_ =: \'history\' jpkg \'' + pacnam + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'manpac_qjide_ =: \'manifest\' jpkg \'' + pacnam + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json 2 3 $ ' +
+                      '(\'summary\';\'history\';\'manifest\'),' +
+                      '(sumpac_qjide_;hispac_qjide_;manpac_qjide_)')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1336,12 +1441,14 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = 'SHM'
                   JsonObj['data']          = s
 
-               # Update package info ######################################
+               # Update package info ###########################################
                if JsonObj['head']['scode'] == 'update':
                   # Check online
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: \'update\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json tmpobj_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: \'update\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json tmpobj_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Get J string
                   s = JObjects[CipAddr].Gets('tmpstr_qjide_')
@@ -1351,24 +1458,27 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = 'UPD'
                   JsonObj['data']          = s
 
-               # Refresh local repository #################################
+               # Refresh local repository ######################################
                if JsonObj['head']['scode'] == 'refresh':
                   # Check online
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: \'update\' jpkg \'\'')
-                  s = JObjects[CipAddr].Exec('tmpstr_qjide_ =: enc_json tmpobj_qjide_')
-                  # Sometimes, some unwanted output is generated => so we clear it
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: \'update\' jpkg \'\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpstr_qjide_ =: enc_json tmpobj_qjide_')
+                  # Sometimes, some unwanted output is generated => clear it
                   JObjects[CipAddr].Drop()
                   # Prepare return object
                   JsonObj['head']['rcode'] = 'INF'
                   JsonObj['head']['rmesg'] = 'UPD'
                   JsonObj['data']          = ''
 
-               # Install given package ####################################
+               # Install given package #########################################
                if JsonObj['head']['scode'] == 'install':
                   # Package name
                   pacnam = qjide_encode2(JsonObj['data'])
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: \'install\' jpkg \'' + pacnam + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: \'install\' jpkg \'' + pacnam + '\'')
                   # Get output
                   out = JObjects[CipAddr].Recv()
                   # Prepare return object
@@ -1376,12 +1486,13 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = 'INS'
                   JsonObj['data']          = out
 
-               # Remove given package #####################################
+               # Remove given package ##########################################
                if JsonObj['head']['scode'] == 'remove':
                   # Package name
                   pacnam = qjide_encode2(JsonObj['data'])
                   # Get all packages
-                  s = JObjects[CipAddr].Exec('tmpobj_qjide_ =: \'remove\' jpkg \'' + pacnam + '\'')
+                  s = JObjects[CipAddr].Exec(
+                      'tmpobj_qjide_ =: \'remove\' jpkg \'' + pacnam + '\'')
                   # Get output
                   out = JObjects[CipAddr].Recv()
                   # Prepare return object
@@ -1406,7 +1517,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = msg
                   JsonObj['data']          = JObjects[CipAddr].Prom()
 
-               # Send command to J ########################################
+               # Send command to J #############################################
                if JsonObj['head']['scode'] == 'send':
                   cmd = qjide_encode2(JsonObj['data'].strip())
                   JObjects[CipAddr].Send(cmd)
@@ -1414,7 +1525,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   JsonObj['head']['rmesg'] = ''
                   JsonObj['data']          = JObjects[CipAddr].Prom()
 
-               # Receive output from J ####################################
+               # Receive output from J #########################################
                if JsonObj['head']['scode'] == 'recv':
                   # Plot data
                   if JsonObj['data'].lower() == 'plot':
@@ -1425,7 +1536,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                         # Send output string to the client
                         JsonObj['head']['rcode'] = 'INF'
                         JsonObj['head']['rmesg'] = ''
-                        JsonObj['data']          = qjide_decode2(PlotHtml[CipAddr])
+                        JsonObj['data']          = qjide_decode2(
+                                                   PlotHtml[CipAddr])
                      else:
                         # Send empty plot data
                         JsonObj['head']['rcode'] = 'INF'
@@ -1440,13 +1552,11 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      JsonObj['head']['rcode'] = 'INF'
                      JsonObj['head']['rmesg'] = ''
                      JsonObj['data']          = qjide_decode2(gui)
-                     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-                     # print('********** gui = ' + gui)
                   # Raw/Text data / parse plot data
                   else:
                      out = JObjects[CipAddr].Recv()
-                     # We assume that an output can contain text as well as html
-                     # So we split it up
+                     # We assume that an output can contain text
+                     # as well as html, so we split it up
                      idx = out.find('<!-- j html output a -->')
                      if idx >= 0:
                         pre = out[:idx]
@@ -1454,16 +1564,23 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      else:
                         pre = out
                         pos = ''
-                     # Parse output string (we could receive some html from viewmat or plot)
+                     # Parse output string,
+                     # we could receive some html from viewmat or plot
                      if pos.startswith('<!-- j html output a -->'):
                         # This must be a plot output
-                        tb1 = '<table width="100%" height="100%"><tr><td align="center" valign="middle">'
+                        tb1 = ('<table width="100%" height="100%"><tr>' +
+                               '<td align="center" valign="middle">')
                         tb2 = '</td></tr></table>'
-                        pos = pos.replace('<!-- j html output a -->','<html><body>'+tb1,1)
-                        pos = pos.replace('<!-- j html output z -->',tb2+'</body></html>',1)
-                        pos = pos.replace('<!-- j html output a -->','<html><body>')
-                        pos = pos.replace('<!-- j html output z -->','</body></html>')
-                        pos = pos.replace('<!-- j js a -->','<script language="javascript">')
+                        pos = pos.replace('<!-- j html output a -->',
+                                          '<html><body>'+tb1,1)
+                        pos = pos.replace('<!-- j html output z -->',
+                                          tb2+'</body></html>',1)
+                        pos = pos.replace('<!-- j html output a -->',
+                                          '<html><body>')
+                        pos = pos.replace('<!-- j html output z -->',
+                                          '</body></html>')
+                        pos = pos.replace('<!-- j js a -->',
+                                          '<script language="javascript">')
                         pos = pos.replace('<!-- j js z -->','</script>')
                         pos = pos.replace('<!-- ;','')
                         pos = pos.replace(' -->','')
@@ -1476,7 +1593,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      # Send output string to the client
                      JsonObj['head']['rcode'] = 'INF'
                      JsonObj['head']['rmesg'] = ''
-                     JsonObj['data']          = qjide_decode2(out + JObjects[CipAddr].Prom())
+                     JsonObj['data']          = qjide_decode2(out +
+                                                JObjects[CipAddr].Prom())
 
             ####################################################################
             # WWD (Web Window Driver)                                          #
@@ -1491,7 +1609,8 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                   evt = evt + '\'\''
                   # Replace single single-quotes (') by double single-quotes ('')
                   dat = dat.replace('\'','\'\'')
-                  s = JObjects[CipAddr].Exec('wwdinfo_qjide_ =: dec_json \'' + dat + '\'')
+                  s = JObjects[CipAddr].Exec('wwdinfo_qjide_ =: dec_json \'' +
+                                             dat + '\'')
                   JObjects[CipAddr].Send(evt)
                   JsonObj['head']['rcode'] = 'INF'
                   JsonObj['head']['rmesg'] = ''
@@ -1509,7 +1628,7 @@ class ApplicationHandler(BaseHTTPRequestHandler):
                      JsonObj['head']['rmesg'] = ''
                      JsonObj['data']          = ''
 
-            # Just for debugging ###########################################
+            # Just for debugging ###############################################
             if VerBose == True:
                try:
                   print('SEND >>> ' + self.path)
@@ -1541,14 +1660,15 @@ class ApplicationHandler(BaseHTTPRequestHandler):
          # Return exception to frontend
          try:
             JsonObj['head']['rcode'] = 'ERR'
-            JsonObj['head']['rmesg'] = 'Exception in POST/handler: ' + str(sys.exc_info())
+            JsonObj['head']['rmesg'] = ('Exception in POST/handler: ' +
+                                        str(sys.exc_info()))
             JsonObj['data']          = ''
             JsonStr = json.dumps(JsonObj)
             self.send_response(200)
             self.send_header('Content-Type','application/json' )
             self.send_header('Content-length',str(len(JsonStr)))
             self.end_headers()
-            self.wfile.write(JsonStr)
+            self.wfile.write(qjide_encode3(JsonStr))
          except:
             print_exception_info()
   
@@ -1559,10 +1679,19 @@ class ApplicationHandler(BaseHTTPRequestHandler):
 # Start Server
 if __name__  == '__main__':
 
+   # Eval binaries folder
+   if os.path.isabs(JBinFol):
+      bf = os.path.join(JBinFol)
+   else:
+      bf = os.path.join(JInsFol,JBinFol)
+
    # Print some useful output
-   print('[J IDE python web server, V2.2.0]')
+   print('[J IDE python web server, V2.2.2]')
    print('')
    print('Python:          ' + sys.version)
+   print('')
+   print('J Installation:  ' + JInsFol)
+   print('J Binaries:      ' + bf     )
    print('')
    print('Web Address:     ' + SrvHost + ':' + str(SrvPort))
    print('Document Root:   ' + DocRoot)
@@ -1584,8 +1713,17 @@ if __name__  == '__main__':
       subprocess.Popen(WebClnt + ' http://' + SrvHost + ':' + str(SrvPort))
 
    # Start HTTP server in main thread
-   server = HTTPServer((SrvHost,SrvPort),ApplicationHandler)
-   server.serve_forever()
+   try:
+      server = HTTPServer((SrvHost,SrvPort),ApplicationHandler)
+      server.serve_forever()
+   except KeyboardInterrupt:
+      print('')
+      print('Keyboard Interrupt ^C received.')
+      HelpServ.shutdown()
+      server.shutdown()
+      print('')
+      print('Server shutdown done, exiting.')
+      sys.exit(0)
 
 ################################################################################
 # EOF

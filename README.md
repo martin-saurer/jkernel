@@ -26,6 +26,8 @@ Copy the directory "jkernel" to your anaconda installation folder:
 
 * Edit qjide.cfg to specify your J installation folder
 
+* Edit qjide.cfg to specify your J binaries folder, especially on Arch Linux, where libj.so goes to /usr/lib/j8/bin
+
 ### Kernel Definition
 
 Copy the directory "jkernel" under \<repository\>/kernel_definition/ to:
