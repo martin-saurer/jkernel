@@ -38,6 +38,18 @@ Copy the directory "jkernel" under \<repository\>/kernel_definition/ to:
 
 * Windows: %APPDATA%\\Roaming\\jupyter\\kernels\\
 
+### Syntax Highlighting
+
+Copy the file "J.js" under \<repository\>/syntax/ to:
+
+* Mac OS X: \<anaconda-installation-folder\>/lib/python3.5/site-packages/notebook/static/components/codemirror/mode/J/J.js
+
+
+* Linux: \<anaconda-installation-folder\>/lib/python3.5/site-packages/notebook/static/components/codemirror/mode/J/J.js
+
+
+* Windows: \<anaconda-installation-folder\>\\Lib\\site-packages\\notebook\\static\\components\\codemirror\\mode\\J\\J.js
+
 ## Run
 
 Run: jupyter notebook (from the command line)

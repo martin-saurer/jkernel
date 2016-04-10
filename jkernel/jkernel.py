@@ -48,7 +48,7 @@ class JKernel(Kernel):
    implementation         = 'jkernel'
    implementation_version = '2.2.0'
    language_info          = {
-      'mimetype':       'text/plain',
+      'mimetype':       'text/x-J',
       'name':           'J',
       'file_extension': 'ijs'
    }
@@ -79,6 +79,13 @@ class JKernel(Kernel):
          status = self.J.Exec(line)
          # Receive output from J
          output = self.J.Recv()
+
+      """ Experiment
+      code.replace('\'','\'\'')
+      self.J.Exec('input_qjide_ =: \'' + code + '\'')
+      self.J.Exec('0!:111 input_qjide_')
+      output = self.J.Recv()
+      """
 
       # Check silent flag
       if not silent:

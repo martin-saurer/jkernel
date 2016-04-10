@@ -381,7 +381,7 @@ class J():
       while not self.JInpRdy:
          time.sleep(0.01)
          if not self.JIolRun:
-            self.JinpStr = ''
+            self.JInpStr = ''
             break
       cmd = self.JInpStr
       self.JInpStr = ''
