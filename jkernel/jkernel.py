@@ -46,7 +46,7 @@ class JKernel(Kernel):
 
    # Basic kernel setup
    implementation         = 'jkernel'
-   implementation_version = '2.2.0'
+   implementation_version = '2.2.3'
    language_info          = {
       'mimetype':       'text/x-J',
       'name':           'J',
@@ -71,21 +71,36 @@ class JKernel(Kernel):
       # Global variables
       global canvasnum
 
+      # Initialization
+      output = ''
+
       # Split cell into single lines
       lines = code.splitlines()
 
-      # Pass input to J
+      # Pass input to J (old version)
+      """
       for line in lines:
          status = self.J.Exec(line)
          # Receive output from J
          output = self.J.Recv()
-
-      """ Experiment
-      code.replace('\'','\'\'')
-      self.J.Exec('input_qjide_ =: \'' + code + '\'')
-      self.J.Exec('0!:111 input_qjide_')
-      output = self.J.Recv()
       """
+
+      # Pass input to J (new version)
+      # Multi-line statements (like verb definitions) are now possible
+      # Only the output of the last line (statement) is printed
+      lines = [line for line in lines if line.strip() != '']
+      lastline = ''
+      if len(lines) > 0:
+         if not lines[-1].strip() == ')':
+            lastline = lines[-1]
+            del lines[-1]
+            code = '\n'.join(lines)
+      code = code.replace('\'','\'\'')
+      self.J.Exec('input_qjide_ =: \'' + code + '\'')
+      self.J.Exec('0!:110 input_qjide_')
+      if lastline.strip() != '':
+         self.J.Exec(lastline)
+         output = self.J.Recv()
 
       # Check silent flag
       if not silent:
