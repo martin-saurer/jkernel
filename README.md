@@ -50,6 +50,14 @@ Copy the file "J.js" under \<repository\>/syntax/ to:
 
 * Windows: \<anaconda-installation-folder\>\\Lib\\site-packages\\notebook\\static\\components\\codemirror\\mode\\J\\J.js
 
+### Examples
+
+The sub-directory examples contains some examples using Jupyter Notebook with the jkernel.
+
+You may copy the .ipynb files to any location you wish.
+
+Plase copy the sub-directory jupyter_examples to your J user folder.
+
 ## Run
 
 Run: jupyter notebook (from the command line)
