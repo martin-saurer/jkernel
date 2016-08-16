@@ -6,7 +6,7 @@ It is based on the same code as [qjide](http://www.github.com/martin-saurer/qjid
 
 ## Prerequisites
 
-* [Jupyter Notebook](http://jupyter.org) Version 4.0.6 (other versions may also work). Recommended: [Anaconda from Continuum Analytics](https://www.continuum.io/downloads)
+* [Jupyter Notebook](http://jupyter.org) Version 4.0.6 (or greater). Recommended: [Anaconda from Continuum Analytics](https://www.continuum.io/downloads)
 
 * A working [J 804](http://www.jsoftware.com) installation
 
@@ -60,6 +60,6 @@ Plase copy the sub-directory jupyter_examples to your J user folder.
 
 ## Run
 
-Run: jupyter notebook (from the command line)
+Run: **jupyter notebook** (from the command line)
 
 Or: Use the anaconda launcher, and start "ipython-notebook"
