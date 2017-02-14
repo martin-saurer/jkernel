@@ -71,6 +71,9 @@ class JKernel(Kernel):
       # Global variables
       global canvasnum
 
+      # Debug output
+      #self.log.error('*** do_execute')
+
       # Initialization
       output = ''
 
@@ -111,11 +114,12 @@ class JKernel(Kernel):
                try:
 
                   # Is it an image output ?
-                  prefix = '<!-- j html output a --><img src="~temp/'
+                  prefix = '<!-- j html output a --><img'
                   if output.startswith(prefix):
 
                      # Extract image name
-                     imgnam = output[len(prefix):]
+                     stapos = output.find('src=')
+                     imgnam = output[stapos+11:]
                      endpos = imgnam.find('?')
                      imgnam = imgnam[:endpos]
                      imgnam = os.path.join(qjide.JUsrFol,'temp',imgnam)
