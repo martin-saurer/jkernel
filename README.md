@@ -8,7 +8,7 @@ It is based on the same code as [qjide](http://www.github.com/martin-saurer/qjid
 
 * [Jupyter Notebook](http://jupyter.org) Version 4.0.6 (or greater). Recommended: [Anaconda from Continuum Analytics](https://www.continuum.io/downloads)
 
-* A working [J 804](http://www.jsoftware.com) installation
+* A working [J 805](http://www.jsoftware.com) installation
 
 ## Installation
 
@@ -16,9 +16,9 @@ It is based on the same code as [qjide](http://www.github.com/martin-saurer/qjid
 
 Copy the directory "jkernel" to your anaconda installation folder:
 
-* Mac OS X: \<anaconda-installation-folder\>/lib/python3.5/site-packages/
+* Mac OS X: \<anaconda-installation-folder\>/lib/python3.6/site-packages/
 
-* Linux: \<anaconda-installation-folder\>/lib/python3.5/site-packages/
+* Linux: \<anaconda-installation-folder\>/lib/python3.6/site-packages/
 
 * Windows: \<anaconda-installation-folder\>\\Lib\\site-packages\\
 
@@ -42,10 +42,10 @@ Copy the directory "jkernel" under \<repository\>/kernel_definition/ to:
 
 Copy the file "J.js" under \<repository\>/syntax/ to:
 
-* Mac OS X: \<anaconda-installation-folder\>/lib/python3.5/site-packages/notebook/static/components/codemirror/mode/J/J.js
+* Mac OS X: \<anaconda-installation-folder\>/lib/python3.6/site-packages/notebook/static/components/codemirror/mode/J/J.js
 
 
-* Linux: \<anaconda-installation-folder\>/lib/python3.5/site-packages/notebook/static/components/codemirror/mode/J/J.js
+* Linux: \<anaconda-installation-folder\>/lib/python3.6/site-packages/notebook/static/components/codemirror/mode/J/J.js
 
 
 * Windows: \<anaconda-installation-folder\>\\Lib\\site-packages\\notebook\\static\\components\\codemirror\\mode\\J\\J.js
