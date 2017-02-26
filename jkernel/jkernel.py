@@ -55,7 +55,7 @@ class JKernel(Kernel):
    banner                 = 'J Programming Language Kernel'
    help_links             = [
       {'text': 'Vocabulary', 'url': 'http://www.jsoftware.com/help/dictionary/vocabul.htm'},
-      {'text': 'NuVoc',      'url': 'http://www.jsoftware.com/jwiki/NuVoc'}
+      {'text': 'NuVoc',      'url': 'http://code.jsoftware.com/wiki/NuVoc'}
    ]
 
    # Constructor
