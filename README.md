@@ -62,4 +62,4 @@ Plase copy the sub-directory jupyter_examples to your J user folder.
 
 Run: **jupyter notebook** (from the command line)
 
-Or: Use the anaconda launcher, and start "ipython-notebook"
+Or: Use the anaconda navigator, and start "jupyter notebook"
