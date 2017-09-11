@@ -215,10 +215,6 @@ NB. ****************************************************************************
 NB. qjide in Qt/WebView
 NB. ****************************************************************************
 
-NB. PLEASE NOTE:
-NB. The Qt/WebView in Qt 4.8.5 under MAC OS X 1.9.1 (Mavericks)
-NB. seems not that stable and fast enough for production use.
-
 NB. Simple browser using Qt/WebView
 qtqjide =: 3 : 0
    wd 'pc qtqjide'
@@ -226,7 +222,7 @@ qtqjide =: 3 : 0
    wd 'cc wv webview'
    wd 'pas 0 0'
    wd 'pshow'
-   wd 'set wv url *http://130.60.243.198:8080'
+   wd 'set wv url *http://127.0.0.1:8080'
 )
 
 qtqjide_close =: 3 : 0
