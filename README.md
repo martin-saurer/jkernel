@@ -1,10 +1,14 @@
-# Jupyter Notebook jkernel
+# Jupyter Notebook/Lab jkernel
 
-The jkernel is a J programming language integration for the [Jupyter Notebook](http://jupyter.org).
+The jkernel is a J programming language integration for the [Jupyter Notebook](http://jupyter.org)
+
+## What's new (April 2019)
+
+* The Jupyter Notebook jkernel is now compatible with **jupyter lab**
 
 ## Prerequisites
 
-* [Jupyter Notebook](http://jupyter.org) Version 4.x (or greater).
+* [Jupyter Notebook](http://jupyter.org) Version 4.x (or greater)
 
 * Recommended: [Anaconda from Anaconda Inc.](https://www.anaconda.com/downloads)
 
@@ -22,9 +26,9 @@ The jkernel is a J programming language integration for the [Jupyter Notebook](h
 
 ## Examples
 
-The sub-directories **Jupyter_Notebook_J_Labs** and **Jupyter_Notebook_J_Examples** contain some example notebooks.
+The sub-directories **Jupyter_Notebook_J_Labs** and **Jupyter_Notebook_J_Examples** contain some example notebooks
 
-The sub-directory **Jupyter_Notebook_J_Example_Data** should be copied to the J user directory to run the example notebooks in **Jupyter_Notebook_J_Examples**.
+The sub-directory **Jupyter_Notebook_J_Example_Data** should be copied to the J user directory to run the example notebooks in **Jupyter_Notebook_J_Examples**
 
 ## Run
 
@@ -32,4 +36,3 @@ Run: **jupyter notebook** (from the command line)
 
 Run: **jupyter lab** (from the command line)
 
-Or: Use the anaconda launcher, and start **ipython-notebook**
