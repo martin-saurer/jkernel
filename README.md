@@ -20,7 +20,10 @@ The jkernel is a J programming language integration for the [Jupyter Notebook](h
 
 **Please Note:**
 It is mandatory to use the **python** command from Anaconda or Miniconda!
-On *nix OS, the command **which python** shows you the path of python.
+
+NOT the python command that probably comes pre-installed on your operating system.
+
+On *nix OS, the command **which python** shows you the path of the python interpreter.
 
 * python setup<span></span>.py **install**
 
