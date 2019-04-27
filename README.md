@@ -10,13 +10,17 @@ The jkernel is a J programming language integration for the [Jupyter Notebook](h
 
 * [Jupyter Notebook](http://jupyter.org) Version 4.x (or greater)
 
-* Recommended: [Anaconda from Anaconda Inc.](https://www.anaconda.com/downloads)
+* Recommended: [Anaconda from Anaconda Inc.](https://www.anaconda.com/distribution)
 
 * Or: [Miniconda](https://conda.io/miniconda.html) (Jupyter must be installed manually)
 
 * A working [J 807](http://www.jsoftware.com) (or greater) (successfully tested on J807 + J901beta) installation
 
 ## Installation / Uninstallation / Installation Check
+
+**Please Note:**
+It is mandatory to use the **python** command from Anaconda or Miniconda!
+On *nix OS, the command **which python** shows you the path of python.
 
 * python setup<span></span>.py **install**
 
