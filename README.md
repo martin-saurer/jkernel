@@ -2,9 +2,10 @@
 
 The jkernel is a J programming language integration for the [Jupyter Notebook](http://jupyter.org)
 
-## What's new (April 2019)
+## What's new (August 2020)
 
-* The Jupyter Notebook jkernel is now compatible with **jupyter lab**
+* Updated for J901
+* Windows 10 64bit compatibility
 
 ## Prerequisites
 
@@ -14,7 +15,7 @@ The jkernel is a J programming language integration for the [Jupyter Notebook](h
 
 * Or: [Miniconda](https://conda.io/miniconda.html) (Jupyter must be installed manually)
 
-* A working [J 807](http://www.jsoftware.com) (or greater) (successfully tested on J807 + J901beta) installation
+* A working [J 901](http://www.jsoftware.com) (or greater)
 
 ## Installation / Uninstallation / Installation Check
 
