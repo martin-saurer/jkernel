@@ -67,8 +67,33 @@ class JKernel(Kernel):
     def __init__(self, *args, **kwargs):
         # Call super class constructor
         super(JKernel,self).__init__(*args,**kwargs)
+
+        # Get required OS environment variables
+        JInsFol = os.getenv('J_INSTALLATION_FOLDER')
+        JBinFol = os.getenv('J_BIN_FOLDER')
+
         # Initialize J
-        self.J = jinter.J()
+        self.J = jinter.J(JInsFol,JBinFol)
+
+        # Initialize J JHS
+        self.J.Exec('IFJHS_z_ =: 1')
+        self.J.Exec('canvasnum_jhs_ =: 1')
+        self.J.Exec('load \'jhs\'')
+
+        # This one is not defined on Windows ???
+        if os.name == 'nt':
+            self.J.Exec('iad_pplatimg_ =: 15!:14@boxopen')
+        # end if
+
+        # Get J user folder
+        self.J.Exec('tmpstr_jinter_ =: jpath \'~user\'')
+        s = self.J.GetStrVar('tmpstr_jinter_')
+        if os.name == 'nt':
+            s = s.replace('/','\\')
+        else:
+            s = s.replace('\\','/')
+        # end if
+        self.J.JUsrFol = s
     # end def
 
     # Override do_execute method
@@ -121,8 +146,15 @@ class JKernel(Kernel):
         # Check silent flag
         if not silent:
 
+            # Debug output
+            #self.log.error('*** not silent')
+
             # Check output length
             if len(output) > 0:
+
+                # Debug output
+                #self.log.error('*** len(output) > 0')
+                #self.log.error('*** ' + self.J.JUsrFol)
 
                 # Check output
                 if output.startswith('<!-- j html output a -->'):
@@ -146,7 +178,12 @@ class JKernel(Kernel):
                             # Read image in base64 encoded data
                             with open(imgnam,'rb') as fp:
                                 imgdat = base64.b64encode(fp.read()).decode()
+                            # end with
+                            try:
                                 os.remove(imgnam)
+                            except:
+                                pass
+                            # end try
 
                             # Send output data
                             content = {
@@ -170,14 +207,19 @@ class JKernel(Kernel):
                             # Read html file
                             with open(htmnam,'r') as fp:
                                 htmdat = fp.read()
-                                os.remove(htmnam)
                                 htmdat = htmdat.replace('</article>',
                                         '</article><script>graph();</script>')
                                 htmdat = htmdat.replace('canvas1',
                                         'canvas' + str(canvasnum))
+                            # end with
+                            try:
+                                os.remove(htmnam)
+                            except:
+                                pass
+                            # end try
 
-                                # Increment canvasnum
-                                canvasnum += 1
+                            # Increment canvasnum
+                            canvasnum += 1
 
                             content = {
                                 'source'   : 'J',
