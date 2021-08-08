@@ -358,7 +358,7 @@ class J():
 if __name__  == '__main__':
 
     # Create async J instance
-    j = J('/home/martin/J901','bin')
+    j = J('/home/martin/J902','bin')
     #j = J('C:\\Users\\martsa-adm\\J901','bin')
 
     # Run our I/O loop

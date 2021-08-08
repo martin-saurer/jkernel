@@ -59,7 +59,7 @@ class JKernel(Kernel):
         },
         {
              'text': 'NuVoc',
-            'url':  'http://www.jsoftware.com/jwiki/NuVoc'
+             'url':  'http://www.jsoftware.com/jwiki/NuVoc'
         }
     ]
 
