@@ -72,6 +72,12 @@ class JKernel(Kernel):
         JInsFol = os.getenv('J_INSTALLATION_FOLDER')
         JBinFol = os.getenv('J_BIN_FOLDER')
 
+        # Handle undefined environment variables
+        if (JInsFol == None) or (JBinFol == None):
+            raise Exception('Environment Variables J_INSTALLATION_FOLDER ' +
+                            'and/or J_BIN_FOLDER not defined.')
+        # end if
+
         # Initialize J
         self.J = jinter.J(JInsFol,JBinFol)
 
@@ -241,7 +247,6 @@ class JKernel(Kernel):
                                      '\n')
                         }
                         self.send_response(self.iopub_socket,'stream',content)
-
                     # end try
                   
                 # Is it an html output
