@@ -2,10 +2,10 @@
 
 The jkernel is a J programming language integration for the [Jupyter Notebook](http://jupyter.org)
 
-## What's new (August 2020)
+## What's new (August 2021)
 
-* Updated for J901
-* Windows 10 64bit compatibility
+* Updated for J902
+* Code cosmetics and clearer error messages
 
 ## Prerequisites
 
