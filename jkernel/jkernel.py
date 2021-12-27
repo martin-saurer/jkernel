@@ -50,7 +50,7 @@ class JKernel(Kernel):
     language_info          = {
         'name'           : 'J',
         'mimetype'       : 'text/J',
-        'file_extension' : 'ijs'
+        'file_extension' : '.ijs'
     }
     banner                 = 'J Programming Language - Jupyter Kernel'
     help_links             = [
