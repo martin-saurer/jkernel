@@ -10,6 +10,7 @@
 #              set the following environment variable:
 #              export VERSIONER_PYTHON_PREFER_32_BIT=yes
 #
+# Version:     27.12.2021 Various code improvements
 ###############################################################################
 
 ###############################################################################
@@ -45,26 +46,27 @@ class JKernel(Kernel):
 
     # Basic kernel setup
     implementation         = 'jkernel'
-    implementation_version = '3.2.1'
+    implementation_version = '3.2.2'
     language_info          = {
-        'name'            : 'J',
-        'mimetype'        : 'text/J',
-        'file_extension'  : 'ijs'
+        'name'           : 'J',
+        'mimetype'       : 'text/J',
+        'file_extension' : 'ijs'
     }
     banner                 = 'J Programming Language - Jupyter Kernel'
     help_links             = [
         {
-            'text': 'Vocabulary',
-            'url':  'http://www.jsoftware.com/help/dictionary/vocabul.htm'
+            'text'       : 'Vocabulary',
+            'url'        : 'https://www.jsoftware.com/help/dictionary/vocabul.htm'
         },
         {
-             'text': 'NuVoc',
-             'url':  'http://www.jsoftware.com/jwiki/NuVoc'
+            'text'       : 'NuVoc',
+            'url'        :  'https://www.jsoftware.com/jwiki/NuVoc'
         }
     ]
 
     # Constructor
-    def __init__(self, *args, **kwargs):
+    def __init__(self,*args,**kwargs):
+
         # Call super class constructor
         super(JKernel,self).__init__(*args,**kwargs)
 
@@ -72,16 +74,33 @@ class JKernel(Kernel):
         JInsFol = os.getenv('J_INSTALLATION_FOLDER')
         JBinFol = os.getenv('J_BIN_FOLDER')
 
-        # Handle undefined environment variables
-        if (JInsFol == None) or (JBinFol == None):
-            raise Exception('Environment Variables J_INSTALLATION_FOLDER ' +
-                            'and/or J_BIN_FOLDER not defined.')
-        # end if
+        # Check installation and binary folder
+        try:
+            if not os.access(JInsFol,mode=os.F_OK|os.R_OK):
+                raise Exception('J installation folder not found or not readable.')
+            # end if
+        except:
+            raise Exception('J installation folder not found or not readable.')
+        # end try
+        try:
+            if os.path.isabs(JBinFol):
+                if not os.access(JBinFol,mode=os.F_OK|os.R_OK):
+                    raise Exception('J binary folder not found or not readable.')
+                # end if
+            else:
+                if not os.access(os.path.join(JInsFol,JBinFol),
+                                 mode=os.F_OK|os.R_OK):
+                    raise Exception('J binary folder not found or not readable.')
+                # end if
+            # end if
+        except:
+            raise Exception('J binary folder not found or not readable.')
+        # end try
 
         # Initialize J
         self.J = jinter.J(JInsFol,JBinFol)
 
-        # Initialize J JHS
+        # Initialize J JHS (yes, we use JHS, because Jupyter is somewhat similar ;-)
         self.J.Exec('IFJHS_z_ =: 1')
         self.J.Exec('canvasnum_jhs_ =: 1')
         self.J.Exec('load \'jhs\'')
@@ -100,15 +119,25 @@ class JKernel(Kernel):
             s = s.replace('\\','/')
         # end if
         self.J.JUsrFol = s
+
+        # Check accessibility of J user folder
+        try:
+            if not os.access(self.J.JUsrFol,mode=os.F_OK|os.R_OK):
+                raise Exception('J user folder not found or not readable.')
+            # end if
+        except:
+            raise Exception('J user folder not found or not readable.')
+        # end try
+
     # end def
 
     # Override do_execute method
     def do_execute(self,
                    code,
                    silent,
-                   store_history=True,
-                   user_expressions=None,
-                   allow_stdin=False):
+                   store_history    = True,
+                   user_expressions = None,
+                   allow_stdin      = False):
 
         # Global variables
         global canvasnum
@@ -162,13 +191,13 @@ class JKernel(Kernel):
                 #self.log.error('*** len(output) > 0')
                 #self.log.error('*** ' + self.J.JUsrFol)
 
-                # Check output
+                # Check output (output from JHS)
                 if output.startswith('<!-- j html output a -->'):
 
                     # Error handler
                     try:
 
-                        # Is it an image output ?
+                        # Is it an image output ? (viewmat)
                         prefix = '<!-- j html output a --><img'
                         if output.startswith(prefix):
 
@@ -185,6 +214,8 @@ class JKernel(Kernel):
                             with open(imgnam,'rb') as fp:
                                 imgdat = base64.b64encode(fp.read()).decode()
                             # end with
+
+                            # Remove image to avoid clutter
                             try:
                                 os.remove(imgnam)
                             except:
@@ -202,7 +233,7 @@ class JKernel(Kernel):
                                                'display_data',
                                                content)
 
-                        # Other output (plot)
+                        # Is it a plot output (plot)
                         else:
 
                             # Generate HTML file name
@@ -218,6 +249,8 @@ class JKernel(Kernel):
                                 htmdat = htmdat.replace('canvas1',
                                         'canvas' + str(canvasnum))
                             # end with
+
+                            # Remove html file to avoid clutter
                             try:
                                 os.remove(htmnam)
                             except:
@@ -249,22 +282,22 @@ class JKernel(Kernel):
                         self.send_response(self.iopub_socket,'stream',content)
                     # end try
                   
-                # Is it an html output
+                # Non JHS html output
                 elif output.startswith('<html>'):
                     content = {
-                        'source':   'J',
-                        'metadata': { },
-                        'data':     {'text/html': output}
+                        'source'   : 'J',
+                        'metadata' : { },
+                        'data'     : {'text/html' : output}
                     }
                     self.send_response(self.iopub_socket,
                                        'display_data',
                                        content)
 
+                # Text output
                 else:
-                    # Normal text output
                     content = {
-                        'name': 'stdout',
-                        'text': output
+                        'name' : 'stdout',
+                        'text' : output
                     }
                     self.send_response(self.iopub_socket,'stream',content)
 
@@ -276,10 +309,10 @@ class JKernel(Kernel):
 
         # Return
         return {
-            'status':           'ok',
-            'execution_count':  self.execution_count,
-            'payload':          [],
-            'user_expressions': {},
+            'status'           : 'ok',
+            'execution_count'  : self.execution_count,
+            'payload'          : [],
+            'user_expressions' : {},
         }
 
     # end def do_execute()

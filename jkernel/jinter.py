@@ -4,6 +4,8 @@
 # Author:      Martin Saurer, original 30.12.2017, rewrite 23.02.2020
 # Description: Call J from Python.
 # License:     GPL Version 3 (see gpl3.txt)
+#
+# Version:     27.12.2021 Various code improvements
 ###############################################################################
 # -*- coding: utf-8 -*-
 
@@ -15,7 +17,8 @@
 import os
 import sys
 import ctypes
-import warnings
+
+#import warnings
 
 ###############################################################################
 # Utility functions
@@ -106,6 +109,29 @@ class J():
         self.JInsFol = JInsFol
         self.JBinFol = JBinFol
 
+        # Check installation and binary folder
+        try:
+            if not os.access(self.JInsFol,mode=os.F_OK|os.R_OK):
+                raise Exception('J installation folder not found or not readable.')
+            # end if
+        except:
+            raise Exception('J installation folder not found or not readable.')
+        # end try
+        try:
+            if os.path.isabs(self.JBinFol):
+                if not os.access(self.JBinFol,mode=os.F_OK|os.R_OK):
+                    raise Exception('J binary folder not found or not readable.')
+                # end if
+            else:
+                if not os.access(os.path.join(self.JInsFol,self.JBinFol),
+                                 mode=os.F_OK|os.R_OK):
+                    raise Exception('J binary folder not found or not readable.')
+                # end if
+            # end if
+        except:
+            raise Exception('J binary folder not found or not readable.')
+        # end try
+
         # J user folder
         self.JUsrFol = ''
 
@@ -119,10 +145,15 @@ class J():
         self.JvrData = ctypes.c_longlong(0)
 
         # Build J Dynamic Library name
-        if   sys.platform.startswith('win'   ): self.JDynLib = 'j.dll'
-        elif sys.platform.startswith('darwin'): self.JDynLib = 'libj.dylib'
-        elif sys.platform.startswith('linux' ): self.JDynLib = 'libj.so'
-        else:                                   self.JDynLib = ''
+        if   sys.platform.startswith('win'   ):
+            self.JDynLib = 'j.dll'
+        elif sys.platform.startswith('darwin'):
+            self.JDynLib = 'libj.dylib'
+        elif sys.platform.startswith('linux' ):
+            self.JDynLib = 'libj.so'
+        else:
+            self.JDynLib = ''
+        # end if
 
         # Build J path names
         if os.path.isabs(self.JBinFol):
@@ -206,6 +237,22 @@ class J():
         self.JCBArArray[3] = ctypes.c_void_p(self.JCallBacks[3])
         self.JCBArArray[4] = self.JCallBacks[4]
 
+        # Check accessibility of J library and profile
+        try:
+            if not os.access(self.JLib,os.F_OK|os.R_OK):
+                raise Exception('J library not found or not readable.')
+            # end if
+        except:
+            raise Exception('J library not found or not readable.')
+        # end try
+        try:
+            if not os.access(self.JPro,os.F_OK|os.R_OK):
+                raise Exception('J profile not found or not readable.')
+            # end if
+        except:
+            raise Exception('J profile not found or not readable.')
+        # end try
+
         # Load J dynamic link library / shareable object
         if sys.platform.startswith('win'):
             self.JDll = ctypes.windll.LoadLibrary(self.JLib)
@@ -223,16 +270,16 @@ class J():
         self.JDll.JSM(self.JSession,self.JCBArArray)
 
         # Setup J environment
-        s = self.JDll.JDo(self.JSession,
-                          string_encode('ARGV_z_ =: \'\''))
-        s = self.JDll.JDo(self.JSession,
-                          string_encode('BINPATH_z_ =: \'' + self.JBin + '\''))
-        s = self.JDll.JDo(self.JSession,
-                          string_encode('0!:0 <\'' + self.JPro + '\''))
-        s = self.JDll.JDo(self.JSession,
-                          string_encode('NB. 9!:37 (0,16384,0,16000)'))
-        s = self.JDll.JDo(self.JSession,
-                          string_encode('9!:7 (0{Boxes_j_)'))
+        self.JDll.JDo(self.JSession,
+                      string_encode('ARGV_z_ =: \'\''))
+        self.JDll.JDo(self.JSession,
+                      string_encode('BINPATH_z_ =: \'' + self.JBin + '\''))
+        self.JDll.JDo(self.JSession,
+                      string_encode('0!:0 <\'' + self.JPro + '\''))
+        self.JDll.JDo(self.JSession,
+                      string_encode('NB. 9!:37 (0,16384,0,16000)'))
+        self.JDll.JDo(self.JSession,
+                      string_encode('9!:7 (0{Boxes_j_)'))
 
     # end def __init__(self,JInsFol,JBinFol)
 
@@ -309,11 +356,13 @@ class J():
 
     # Get J string variable
     def GetStrVar(self,var):
+
         # Declare J variable types for calling JGetM/JSetM
         self.JvrType = ctypes.c_longlong(0)
         self.JvrRank = ctypes.c_longlong(0)
         self.JvrShap = ctypes.c_longlong(0)
         self.JvrData = ctypes.c_longlong(0)
+
         # Get variable
         sts = self.JDll.JGetM(self.JSession,
                               string_encode(var),
@@ -321,6 +370,8 @@ class J():
                               ctypes.byref(self.JvrRank),
                               ctypes.byref(self.JvrShap),
                               ctypes.byref(self.JvrData))
+
+        # If status is ok (0), create a Python string
         if sts == 0:
             sln = bytes_to_int(ctypes.string_at(self.JvrShap.value,
                                ctypes.sizeof(ctypes.c_longlong)))
@@ -334,6 +385,8 @@ class J():
 
     # Set J string variable
     def SetStrVar(self,var,val):
+
+        # Declare J variable types for calling JGetM/JSetM
         typ = ctypes.c_longlong(2)
         ran = ctypes.c_longlong(1)
         sln = ctypes.c_longlong(len(val))
@@ -341,13 +394,18 @@ class J():
                   ctypes.string_at(
                       ctypes.addressof(sln),ctypes.sizeof(ctypes.c_longlong)))
         dat = ctypes.c_char_p(string_encode(val))
+
+        # Set variable
         sts = self.JDll.JSetM(self.JSession,
                               string_encode(var),
                               ctypes.byref(typ),
                               ctypes.byref(ran),
                               ctypes.byref(sha),
                               ctypes.byref(dat))
+
+        # Return
         return sts
+
     # end def
 
 ###############################################################################
@@ -357,21 +415,39 @@ class J():
 # For testing, here is an example of a Python driven Jconsole
 if __name__  == '__main__':
 
+    # Import readline if available
+    try:
+        import readline
+        readline.parse_and_bind('tab: complete')
+    except:
+        pass
+    # end try
+
+    # Get installation and binary folder from environment variables
+    jins = os.getenv('J_INSTALLATION_FOLDER')
+    jbin = os.getenv('J_BIN_FOLDER')
+
     # Create async J instance
-    j = J('/home/martin/J902','bin')
-    #j = J('C:\\Users\\martsa-adm\\J901','bin')
+    j = J(jins,jbin)
 
     # Run our I/O loop
     while True:
 
-        # Get input
-        cmd = input('   ')
+        # Error handler
+        try:
 
-        # Exec J sentence
-        j.Exec(cmd)
+            # Get input
+            cmd = input('   ')
+    
+            # Exec J sentence
+            j.Exec(cmd)
+    
+            # Print output
+            sys.stdout.write(j.Recv())
 
-        # Print output
-        sys.stdout.write(j.Recv())
+        except:
+            break
+        # end try
 
     # end while
 
