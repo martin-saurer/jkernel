@@ -2,10 +2,10 @@
 
 The jkernel is a J programming language integration for the [Jupyter Notebook](http://jupyter.org)
 
-## What's new (August 2021)
+## What's new (December 2021)
 
-* Updated for J902
-* Code cosmetics and clearer error messages
+* Updated for J903
+* Improved code robustness
 
 ## Prerequisites
 
@@ -36,7 +36,7 @@ On *nix OS, the command **which python** shows you the path of the python interp
 
 The sub-directories **Jupyter_Notebook_J_Labs** and **Jupyter_Notebook_J_Examples** contain some example notebooks
 
-The sub-directory **Jupyter_Notebook_J_Example_Data** should be copied to the J user directory to run the example notebooks in **Jupyter_Notebook_J_Examples**
+The sub-directory **Jupyter_Notebook_J_Example_Data** should be copied to the **J user** (jpath '~user') directory to run the example notebooks in **Jupyter_Notebook_J_Examples**
 
 ## Run
 
