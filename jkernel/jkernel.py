@@ -46,7 +46,7 @@ class JKernel(Kernel):
 
     # Basic kernel setup
     implementation         = 'jkernel'
-    implementation_version = '3.2.3'
+    implementation_version = '3.2.4'
     language_info          = {
         'name'           : 'J',
         'mimetype'       : 'text/J',
