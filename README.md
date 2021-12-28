@@ -8,6 +8,7 @@ The jkernel is a J programming language integration for the [Jupyter Notebook](h
 * Improved code robustness
 * Can export to .ijs scripts
 * Some bugfixes
+* GIT tags cleanup
 
 ## Prerequisites
 
