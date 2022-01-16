@@ -158,7 +158,7 @@ class JKernel(Kernel):
         lastline = ''
         if len(lines) > 0:
             # Check last line (end of multiline statement)
-            if not lines[-1].strip() == ')':
+            if not lines[-1].strip() in [')','}}']:
                 lastline = lines[-1]
                 del lines[-1]
                 code = '\n'.join(lines)
