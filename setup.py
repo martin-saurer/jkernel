@@ -55,7 +55,8 @@ jupyter_kernels_dir = os.path.join(jupyter_kernels_dir,'jupyter')
 jupyter_kernels_dir = os.path.join(jupyter_kernels_dir,'kernels')
 
 # Build notebook syntax directory
-notebook_syntax_dir = os.path.join(site_packages_dir  ,'notebook'  )
+#notebook_syntax_dir = os.path.join(site_packages_dir  ,'notebook'  )
+notebook_syntax_dir = os.path.join(site_packages_dir  ,'nbclassic' )
 notebook_syntax_dir = os.path.join(notebook_syntax_dir,'static'    )
 notebook_syntax_dir = os.path.join(notebook_syntax_dir,'components')
 notebook_syntax_dir = os.path.join(notebook_syntax_dir,'codemirror')
@@ -118,9 +119,9 @@ src_kernel_definition_files.append(os.path.join(src_kernel_definition_dir,'logo-
 src_kernel_definition_files.append(os.path.join(src_kernel_definition_dir,'logo-64x64.png'))
 
 src_syntax_dir   = os.path.join(src_root_dir,'syntax')
-src_syntax_dir   = os.path.join(src_syntax_dir,'J')
+src_syntax_dir   = os.path.join(src_syntax_dir,'j')
 src_syntax_files = []
-src_syntax_files.append(os.path.join(src_syntax_dir,'J.js'))
+src_syntax_files.append(os.path.join(src_syntax_dir,'j.js'))
 
 ###############################################################################
 # Parse arguments and invoke action
@@ -151,9 +152,9 @@ if sys.argv[1].lower().strip() == 'install':
         shutil.copytree(src_kernel_definition_dir,os.path.join(jupyter_kernels_dir,'jkernel'))
     except:
         print_exception_info()
-    print('Copy: ' + src_syntax_dir + ' => ' + os.path.join(notebook_syntax_dir,'J'))
+    print('Copy: ' + src_syntax_dir + ' => ' + os.path.join(notebook_syntax_dir,'j'))
     try:
-        shutil.copytree(src_syntax_dir,os.path.join(notebook_syntax_dir,'J'))
+        shutil.copytree(src_syntax_dir,os.path.join(notebook_syntax_dir,'j'))
     except:
         print_exception_info()
     print('Done.')
@@ -188,9 +189,9 @@ if sys.argv[1].lower().strip() == 'uninstall':
         shutil.rmtree(os.path.join(jupyter_kernels_dir,'jkernel'))
     except:
         print_exception_info()
-    print('Remove: ' + os.path.join(notebook_syntax_dir,'J'))
+    print('Remove: ' + os.path.join(notebook_syntax_dir,'j'))
     try:
-        shutil.rmtree(os.path.join(notebook_syntax_dir,'J'))
+        shutil.rmtree(os.path.join(notebook_syntax_dir,'j'))
     except:
         print_exception_info()
     print('Done.')
@@ -232,7 +233,7 @@ if sys.argv[1].lower().strip() == 'check':
             print(df + ' => MISSING')
             all_ok = False
 
-    pth = os.path.join(notebook_syntax_dir,'J')
+    pth = os.path.join(notebook_syntax_dir,'j')
     if os.access(pth,os.R_OK):
         print(pth + ' => OK')
     else:
